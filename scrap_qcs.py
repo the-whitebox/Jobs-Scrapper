@@ -43,7 +43,7 @@ rows = table.find_elements(By.TAG_NAME, "tr")
 # loop through each row and download the PDFs
 for row in rows:
 
-    # find the dropdown menu element by class name
+    # find the dropdown menu element by id
     dropdown_menu = WebDriverWait(row, 10).until(
         EC.presence_of_element_located((By.ID, "dropdownMenu1"))
     )
@@ -51,7 +51,7 @@ for row in rows:
     # click the dropdown menu to open it
     dropdown_menu.click()
 
-    # find the "Download as PDF" menu item by link text and click it
+    # find the "Download as PDF" menu item by class name and click it
     download_as_pdf = WebDriverWait(row, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
     )
