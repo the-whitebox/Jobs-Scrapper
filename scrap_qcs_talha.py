@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-download_dir = "/home/whitebox/job_scrapper/reports"
+download_dir = "/home/whitebox/job_scrapper/reports/policies"
 # download_path="/Users/DELL/Desktop/reports"
 
 chrome_options = uc.ChromeOptions()
@@ -37,13 +37,13 @@ time.sleep(2)
 
 
 def policy_reports():
-    driver.get("https://app.qcs.co.uk/policy-centre/latest-updates#month")
+    driver.get("https://app.qcs.co.uk/group-dashboard/most-viewed-policies?isGroup=False")
     time.sleep(2)
 
     # wait for the table to load
 
     table = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.ID, "content-month"))
+    EC.presence_of_element_located((By.CLASS_NAME, "list"))
     )
 
     if table:
@@ -53,6 +53,7 @@ def policy_reports():
 
 
     # find all the rows in the table
+
     rows = table.find_elements(By.TAG_NAME, "tr")
     if rows:
         print(type(rows))
@@ -60,10 +61,11 @@ def policy_reports():
 
 
     # loop through each row and download the PDFs
+    
     for row in rows:
     
         # find the dropdown menu element by id
-        dropdown_menu = WebDriverWait(row, 10).until(
+        dropdown_menu = WebDriverWait(row, 30).until(
             EC.presence_of_element_located((By.ID, "dropdownMenu1"))
         )
         print('accessing drop down menue..........')
@@ -72,15 +74,11 @@ def policy_reports():
         dropdown_menu.click()
 
     # find the "Download as PDF" menu item by class name and click it
-        download_as_pdf = WebDriverWait(row, 10).until(
+        download_as_pdf = WebDriverWait(row, 30).until(
             EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
         )
         print('pdf downloading.........')
         download_as_pdf.click()
-
-    
-        time.sleep(2)
-        driver.implicitly_wait(30)
 
 def my_company_reports():
     driver.get("https://app.qcs.co.uk/group-dashboard/most-viewed-policies?isGroup=False")
@@ -178,7 +176,7 @@ def policy_center_covid19():
             driver.implicitly_wait(40)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -248,7 +246,7 @@ def policy_center_managers():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -318,7 +316,7 @@ def policy_center_admin():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -344,7 +342,7 @@ def policy_center_care_management():
     action.perform()
     driver.implicitly_wait(20)
     time.sleep(10)
-    tab_list=["12","19","129","109","225"]
+    tab_list=["12"]
     for tab in tab_list:
         new_tab=str("category"+"-"+"tab"+"-"+tab)
         type(new_tab)
@@ -387,16 +385,17 @@ def policy_center_care_management():
             
             driver.implicitly_wait(20)
             action.perform()
-            download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            driver.implicitly_wait(20)
+            download_as_pdf = WebDriverWait(row, 30).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
             print(dropdown_menu.get_attribute('innerHTML'))
 
-            action.move_to_element(download_as_doc)
+            action.move_to_element(download_as_pdf)
             driver.implicitly_wait(40)
-            action.click(download_as_doc)
+            action.click(download_as_pdf)
             
             action.perform()
             time.sleep(30)
@@ -457,7 +456,7 @@ def policy_center_personal_planning():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -526,7 +525,7 @@ def policy_center_health_and_saftey():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -595,7 +594,7 @@ def policy_center_support_service():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -664,7 +663,7 @@ def policy_center_human_resource():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -733,7 +732,7 @@ def policy_center_quality_insurance():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -802,7 +801,7 @@ def policy_center_madication_management():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -872,7 +871,7 @@ def policy_center_Data_protection():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -941,7 +940,7 @@ def policy_center_advice_and_support():
             driver.implicitly_wait(20)
             action.perform()
             download_as_doc = WebDriverWait(row, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsWord"))
+            EC.presence_of_element_located((By.CLASS_NAME, "downloadAsPdf"))
             )
             print('accessing drop down menue..........')
             print(type(dropdown_menu))
@@ -978,7 +977,7 @@ def complaince_stackholder_surveys():
         EC.element_to_be_clickable((By.ID, "dropdownMenu1"))
         )
         
-# click the dropdown menu to open it
+        # click the dropdown menu to open it
         #dropdown_menu.click()
         #print(dropdown_menu.get_attribute('innerHTML'))
         action=ActionChains(driver)
@@ -1002,12 +1001,15 @@ def complaince_stackholder_surveys():
         time.sleep(30)
         print(" batch completd batch completed-------------------- ")
 
-
+#policy_reports()
 #my_company_reports()
 #policy_center_covid19()
 #time.sleep(10)
 #policy_center_managers()
-complaince_stackholder_surveys()
+#policy_center_admin()
+#complaince_stackholder_surveys()
+#policy_center_care_management()
+policy_center_personal_planning()
 
 driver.implicitly_wait(20)
 driver.close()
