@@ -37,7 +37,7 @@ time.sleep(2)
 
 
 def policy_reports():
-    driver.get("https://app.qcs.co.uk/group-dashboard/most-viewed-policies?isGroup=False")
+    driver.get("https://app.qcs.co.uk/policy-centre/latest-updates")
     time.sleep(2)
 
     # wait for the table to load
@@ -537,6 +537,7 @@ def policy_center_health_and_saftey():
             
             action.perform()
             time.sleep(30)
+            driver.implicitly_wait(10)
         print("policy center health and safety batch completed-------------------- ")
 def policy_center_support_service():
     driver.implicitly_wait(10)
@@ -619,7 +620,7 @@ def policy_center_human_resource():
     action.perform()
     driver.implicitly_wait(20)
     time.sleep(10)
-    tab_list=["28","29","30","31","32","33","34","99","211"]
+    tab_list=["28","29","30","31","32","33","34"]
     for tab in tab_list:
         new_tab=str("category"+"-"+"tab"+"-"+tab)
         type(new_tab)
@@ -744,7 +745,7 @@ def policy_center_quality_insurance():
             
             action.perform()
             time.sleep(30)
-        print("Quality Assurance batch completd batch completed-------------------- ")
+        print("Policy center quality assurance batch completd batch completed-------------------- ")
 def policy_center_madication_management():
     driver.implicitly_wait(10)
     driver.get("https://app.qcs.co.uk/policy-centre/my-policies")
@@ -1001,7 +1002,7 @@ def complaince_stackholder_surveys():
         time.sleep(30)
         print(" batch completd batch completed-------------------- ")
 
-#policy_reports()
+policy_reports()
 #my_company_reports()
 #policy_center_covid19()
 #time.sleep(10)
@@ -1009,7 +1010,10 @@ def complaince_stackholder_surveys():
 #policy_center_admin()
 #complaince_stackholder_surveys()
 #policy_center_care_management()
-policy_center_personal_planning()
+#policy_center_personal_planning()
+#policy_center_health_and_saftey()
+#policy_center_quality_insurance()
+
 
 driver.implicitly_wait(20)
 driver.close()
