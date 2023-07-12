@@ -4,6 +4,7 @@ from langchain.vectorstores import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import SimpleSequentialChain
 
 
 
@@ -35,39 +36,46 @@ llm = ChatOpenAI(
 )
 jobs_chain= RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=vectorstore_jobs)
 doc_chain= RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=vectorstore_qcs)
-job_template = """You are a very smart AI assistant named CrewDog . \
+job_template = """You are a very smart AI assistant . \
 You are great at finding jobs only in given context and out of context. \
-if you find a job from context, give the hiring manager details and company Linkedin link as well. \
-When you don't know the answer try to make the relevent answer.
+if you find the hiring manager details please mention otherwise do not mention. \
+if you find any recuriter information please mention except job sources. \
+When you don't know the answer don't say "I don't know" try to make the relevent answer out of contaxt. \
+Do not appologize just create a smart answer.
 
-Here is a question:
-{input}"""
+{context}
+Question:{question}
+Answer:
+"""
 
 
-doc_template = """You are very samrt Q&A assisatnt named CrewDog. You are great at answering the questions about the documents. \
-create a detailed answer in given context.
+doc_template = """An smart AI assisatnt to create an answer in the given context. \
 
-Here is a question:
-{input}"""
 
+{context}
+Question:{question}
+Answer"""
+job_prompt=PromptTemplate(template=job_template,input_variables=["context","question"])
+doc_prompt=PromptTemplate(template=doc_template,input_variables=["context","question"])
 retriever_infos = [
     {
-        "name": "job search", 
-        "description": "An intelligent assistant to find jobs", 
+        "name": "Job search", 
+        "description": "intelligent assistant to find jobs", 
         "retriever": vectorstore_jobs,
-        "prompt_template": job_template,
+        "prompt": job_prompt
     },
     {
-        "name": "Qcs_Documents", 
-        "description": "An intelligent assistant to find answers from qcs documents", 
+        "name": "document search", 
+        "description": "intelligent assistant for Q&A in given context", 
         "retriever": vectorstore_qcs,
-        "prompt_template": doc_template,
+        "prompt": doc_prompt
     },
 
     
 ]
  
-chain = MultiRetrievalQAChain.from_retrievers(llm, retriever_infos, verbose=True)
+chain = MultiRetrievalQAChain.from_retrievers(llm, retriever_infos,verbose=True)
+#overall_chain = SimpleSequentialChain(chains=[jobs_chain, doc_chain], verbose=True)
 
 while True:
     text=input("prompt:")
