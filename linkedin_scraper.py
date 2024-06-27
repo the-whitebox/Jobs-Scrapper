@@ -14,15 +14,19 @@ import pandas as pd
 import re
 from job_embed import linkedin_automate
 import traceback
+from dotenv import load_dotenv
+
+load_dotenv()
+mongo_uri = os.getenv('MONGO_URI')
 
 
 chrome_options = uc.ChromeOptions()
-client = MongoClient("mongodb+srv://shahbazkhan6732:2orI37mNuhTtKzya@cluster0.nqxuncj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient(mongo_uri)
 # client=MongoClient("mongodb+srv://talhayasir:123fightfight@whiteboxscrapper.f0zx0xd.mongodb.net/?retryWrites=true&w=majority")
 db=client['job_scraper']
-USERNAME = "KvGRDz02ozlx8qXC"
-PASSWORD = "82whP2ljuC1wf52h_streaming-1"
-ENDPOINT = "pr.oxylabs.io:7777"
+# USERNAME = "KvGRDz02ozlx8qXC"
+# PASSWORD = "82whP2ljuC1wf52h_streaming-1"
+# ENDPOINT = "pr.oxylabs.io:7777"
 
 proxy_options = {
     'proxy': {

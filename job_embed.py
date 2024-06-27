@@ -69,22 +69,25 @@
     
 
 
-
-
-
-
 import os
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from pymongo import MongoClient
 from pinecone import Pinecone as PineconeClient, ServerlessSpec
+from dotenv import load_dotenv
+
+load_dotenv()
+
+openapi_key = os.getenv('OPENAI_API_KEY')
+pinecone_key = os.getenv('PINECONE_API_KEY')
+environment = os.getenv('PINECONE_ENVIRONMENT')
 
 # Set environment variables
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = openapi_key
 
 # Initialize Pinecone
 pc = PineconeClient(
-    api_key="74dbb1f3-abda-4c51-8c24-3e600c7796f4"
+    api_key=pinecone_key
 )
 # Check if the index exists and create it if not
 if 'crewdogjobs' not in pc.list_indexes().names():
