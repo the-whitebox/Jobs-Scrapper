@@ -69,7 +69,7 @@ class LinkedScrapper:
         self.delay=delay
         logging.info("Starting driver")
         self.linkedin_job=db["jobs"]
-        self.driver = uc.Chrome(headless=True,use_subprocess=True, options=chrome_options,version_main=124)
+        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options,version_main=124)
 
     def login(self, email, password):
         """Go to linkedin and login"""
@@ -232,8 +232,8 @@ class LinkedScrapper:
             self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
         self.wait(50)
         logging.info("Begin linkedin keyword search")
-        keyword = email
-        location = password
+        keyword = "Software Engineer"
+        location = "Lahore"
         self.search_linkedin(keyword, location)
         time.sleep(5)
         try: 
