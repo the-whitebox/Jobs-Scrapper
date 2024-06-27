@@ -18,6 +18,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 mongo_uri = os.getenv('MONGO_URI')
+proxy_http = os.getenv('PROXY_HTTP')
+proxy_https = os.getenv('PROXY_HTTPS')
+email = os.getenv('LINKEDIN_EMAIL')
+password = os.getenv('LINKEDIN_PASSWORD')
 
 chrome_options = uc.ChromeOptions()
 client = MongoClient(mongo_uri)
@@ -26,8 +30,8 @@ db=client['job_scraper']
 
 proxy_options = {
     'proxy': {
-        'http': 'http://KvGRDz02ozlx8qXC:82whP2ljuC1wf52h_country-pk_city-lahore@geo.iproyal.com:12321',
-        'https': 'http://KvGRDz02ozlx8qXC:82whP2ljuC1wf52h_country-pk_city-lahore@geo.iproyal.com:12321',
+        'http': proxy_http,
+        'https': proxy_https,
     }
 }
 # chrome_options.add_argument("--headless")
@@ -225,8 +229,8 @@ class LinkedScrapper:
             self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
         self.wait(50)
         logging.info("Begin linkedin keyword search")
-        keyword = "ASNT"
-        location = "Worldwide"
+        keyword = email
+        location = password
         self.search_linkedin(keyword, location)
         time.sleep(5)
         try: 

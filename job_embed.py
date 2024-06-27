@@ -10,7 +10,7 @@ load_dotenv()
 
 openapi_key = os.getenv('OPENAI_API_KEY')
 pinecone_key = os.getenv('PINECONE_API_KEY')
-environment = os.getenv('PINECONE_ENVIRONMENT')
+mongo_uri = os.getenv('MONGO_URI')
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = openapi_key
@@ -34,7 +34,7 @@ if 'crewdogjobs' not in pc.list_indexes().names():
 index = pc.Index('crewdogjobs')
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 
-client = MongoClient("mongodb+srv://shahbazkhan6732:AXkoh5XMDQBo3FyW@linkdin.q0omyf7.mongodb.net/?retryWrites=true&w=majority&appName=linkdin")
+client = MongoClient(mongo_uri)
 
 db = client['job_scraper']
 linkedin_job = db["jobs"]
