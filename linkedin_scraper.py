@@ -1,3 +1,6 @@
+#!/usr/bin/env python3 
+#-*- coding: utf-8 -*- 
+
 import undetected_chromedriver as uc 
 from selenium.common.exceptions import TimeoutException
 import time 
@@ -45,17 +48,17 @@ chrome_options.add_argument("--disable-popup-blocking")
 chrome_options.add_argument("--start-maximized")
 chrome_options.add_argument('--ignore-certificate-errors-spki-list')
 chrome_options.add_argument('--ignore-ssl-errors')
-download_dir = "/home/whitebox/job_scrapper/reports/resources"
-chrome_options.add_experimental_option("prefs", {
-  "download.default_directory": download_dir,
-  "download.prompt_for_download": False, ## change the downpath accordingly
-  "download.directory_upgrade": False,
-  "safebrowsing.enabled": True,
-  "download.prompt_for_download":False,
-  "profile.default_content_settings.popups":False,
+# download_dir = "/home/whitebox/job_scrapper/reports/resources"
+# chrome_options.add_experimental_option("prefs", {
+#   "download.default_directory": download_dir,
+#   "download.prompt_for_download": False, ## change the downpath accordingly
+#   "download.directory_upgrade": False,
+#   "safebrowsing.enabled": True,
+#   "download.prompt_for_download":False,
+#   "profile.default_content_settings.popups":False,
   
-  
-  })
+
+#   })
 
 class LinkedScrapper:
     def __init__(self, delay=5):
@@ -66,7 +69,7 @@ class LinkedScrapper:
         self.delay=delay
         logging.info("Starting driver")
         self.linkedin_job=db["jobs"]
-        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options,version_main=124)
+        self.driver = uc.Chrome(headless=True,use_subprocess=True, options=chrome_options,version_main=124)
 
     def login(self, email, password):
         """Go to linkedin and login"""
