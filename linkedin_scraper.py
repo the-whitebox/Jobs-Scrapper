@@ -19,14 +19,10 @@ from dotenv import load_dotenv
 load_dotenv()
 mongo_uri = os.getenv('MONGO_URI')
 
-
 chrome_options = uc.ChromeOptions()
 client = MongoClient(mongo_uri)
-# client=MongoClient("mongodb+srv://talhayasir:123fightfight@whiteboxscrapper.f0zx0xd.mongodb.net/?retryWrites=true&w=majority")
+
 db=client['job_scraper']
-# USERNAME = "KvGRDz02ozlx8qXC"
-# PASSWORD = "82whP2ljuC1wf52h_streaming-1"
-# ENDPOINT = "pr.oxylabs.io:7777"
 
 proxy_options = {
     'proxy': {
@@ -56,8 +52,6 @@ chrome_options.add_experimental_option("prefs", {
   
   
   })
-#driver = uc.Chrome(use_subprocess=True, options=chrome_options) 
-
 
 class LinkedScrapper:
     def __init__(self, delay=5):
@@ -67,20 +61,14 @@ class LinkedScrapper:
         logging.basicConfig(level=logging.INFO, format=log_fmt)
         self.delay=delay
         logging.info("Starting driver")
-        # proxies = chrome_proxy(USERNAME, PASSWORD, ENDPOINT)
         self.linkedin_job=db["jobs"]
         self.driver = uc.Chrome(use_subprocess=True, options=chrome_options,version_main=124)
-        # self.driver = uc.Chrome(options=chrome_options,seleniumwire_options=options)
+
     def login(self, email, password):
         """Go to linkedin and login"""
         # go to linkedin:
         logging.info("Logging in")
-        #self.driver.maximize_window()
-        # login_url='https://www.linkedin.com/home'
-        self.driver.get('https://www.linkedin.com/login')
-        # self.driver.get('https://www.whatismyip.com/')
-        
-
+        self.driver.get('https://www.linkedin.com/login')        
         time.sleep(20)
         time.sleep(self.delay)
 
@@ -105,9 +93,7 @@ class LinkedScrapper:
         """
         logging.info("Searching jobs page")
         self.driver.get("https://www.linkedin.com/jobs")
-        # search based on keywords and location and hit enter
         time.sleep(30)
-        # self.driver.save_screenshot("job_search.png")
         search_bar=WebDriverWait(self.driver,10).until(EC.presence_of_element_located((By.ID,'global-nav-search')))
         
         time.sleep(self.delay)
@@ -169,7 +155,6 @@ class LinkedScrapper:
         raw_details = self.driver.find_element(By.ID,"job-details").text
         details=' '.join(raw_details.splitlines())
         
-        # job_details_div=self.driver.find_element(By.CLASS_NAME,"job-details-jobs-unified-top-card__content--two-pane") 
         try:
             job_details_div=self.driver.find_element(By.CLASS_NAME,"job-details-jobs-unified-top-card__container--two-pane") 
             Company_address=job_details_div.find_element(By.CLASS_NAME,'app-aware-link')
@@ -240,21 +225,11 @@ class LinkedScrapper:
             self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
         self.wait(50)
         logging.info("Begin linkedin keyword search")
-        # batch_list=self.load_csv('new_scrape_pera.csv') 
-       
-        # for batch in batch_list:
-        #     self.search_linkedin(batch[0], batch[1])
-        #     self.wait()
-
-            # scrape pages,only do first 8 pages since after that the data isn't 
-            # well suited for me anyways: 
         keyword = "ASNT"
         location = "Worldwide"
         self.search_linkedin(keyword, location)
         time.sleep(5)
         try: 
-            # for page in range(2, 40):
-                # get the jobs list items to scroll through:
             jobs = self.driver.find_elements(By.CLASS_NAME,"occludable-update")
             print('------------------------total number of jobs found------------',len(jobs))
             self.wait()
@@ -298,15 +273,12 @@ class LinkedScrapper:
                         self.driver.implicitly_wait(5)
                     job.click()
                     no_of_jobs=no_of_jobs-1
-            # page_n=f'"{page}"'
-            # self.driver.find_element(By.CSS_SELECTOR,"li[data-test-pagination-page-btn={page_n}]").click()
                 time.sleep(5)
                 self.wait()
                 
         except Exception as e:
             print(traceback.format_exc())
             pass
-                #pagination_bar=self.driver.find_element(By.CLASS_NAME,"artdeco-pagination__pages artdeco-pagination__pages--number")
                             
         self.driver.implicitly_wait(10)
            
