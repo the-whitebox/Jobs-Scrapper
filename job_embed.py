@@ -11,7 +11,6 @@ load_dotenv()
 openapi_key = os.getenv('OPENAI_API_KEY')
 pinecone_key = os.getenv('PINECONE_API_KEY')
 mongo_uri = os.getenv('MONGO_URI')
-
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = openapi_key
 
@@ -19,20 +18,9 @@ os.environ["OPENAI_API_KEY"] = openapi_key
 pc = PineconeClient(
     api_key=pinecone_key
 )
-# Check if the index exists and create it if not
-if 'crewdogjobs' not in pc.list_indexes().names():
-    pc.create_index(
-        name='crewdogjobs',
-        dimension=1536,
-        metric='euclidean',
-        spec=ServerlessSpec(
-            cloud='gcp',
-            region='starter'
-        )
-    )
 
-index = pc.Index('crewdogjobs')
-embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+index = pc.Index('whitebox')
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 client = MongoClient(mongo_uri)
 
@@ -87,4 +75,3 @@ def linkedin_automate(record):
         return True
 
     print("-----------------Exited from linkdin automate method----------------")
-
