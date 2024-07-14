@@ -49,7 +49,7 @@ chrome_options.add_argument("--dns-prefetch-disable")
 chrome_options.add_argument("--disable-infobars")
 chrome_options.add_argument("--disable-web-security")
 chrome_options.add_argument("--disable-site-isolation-trials")
-download_dir = "/home/whitebox/job_scrapper/reports/resources"        
+download_dir = "/"        
 chrome_options.add_experimental_option("prefs", {
   "download.default_directory": download_dir,
   "download.prompt_for_download": False, ## change the downpath accordingly
@@ -139,13 +139,16 @@ class LinkedScrapper:
         return data
 
     def run(self, email, password):
-        if os.path.exists("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt"):
+        # if os.path.exists("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt"):
+        if os.path.exists("usama_data/cookies.txt"):
             self.driver.get("https://www.linkedin.com/")
-            self.load_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
+            # self.load_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
+            self.load_cookie("usama_data/cookies.txt")
             self.driver.get("https://www.linkedin.com/")
         else:
             self.login(email=email, password=password)
-            self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
+            # self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
+            self.save_cookie("usama_data/cookies.txt")
         
         self.wait(random.uniform(10,17))
         logging.info("Begin LinkedIn keyword search")
