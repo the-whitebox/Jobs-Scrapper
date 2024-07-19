@@ -62,3 +62,7 @@ wsproto==1.2.0
 yarl==1.9.4
 fake-useragent
 BeautifulSoup4
+google-auth 
+google-auth-oauthlib 
+google-auth-httplib2 
+google-api-python-client
