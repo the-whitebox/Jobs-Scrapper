@@ -9,7 +9,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 credentials = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-SPREADSHEET_ID = os.getenv('SPREADSHEET_ID')
+SPREADSHEET_ID = '1t1_tscscOjolf5xrIZe15ElsPpzaZezUgut9g_fVpBE'
 RANGE_NAME = 'Sheet1!A1:D10'  # Adjust the range as needed
 
 service = build('sheets', 'v4', credentials=credentials)
