@@ -5,3 +5,4 @@ venv
 .env
 media
 static
+client.json
