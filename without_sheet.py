@@ -153,55 +153,53 @@ class LinkedScrapper:
         self.wait(random.uniform(10,17))
         logging.info("Begin LinkedIn keyword search")
         
-        keyword = "Cloud Engineer"
+        keyword = "MERN stack developer"
         search_location = "Sweden"
-        for data in query_data():
-            self.search_linkedin(data[0], data[1])
-            self.search_linkedin(data[0], data[1])
-            time.sleep(random.uniform(5, 10))
-            jobs = self.driver.find_elements(By.CLASS_NAME,"occludable-update")
-            time.sleep(random.uniform(5, 10))
+        self.search_linkedin(keyword, search_location)
+        time.sleep(random.uniform(5, 10))
+        jobs = self.driver.find_elements(By.CLASS_NAME,"occludable-update")
+        time.sleep(random.uniform(5, 10))
+        
+        # getting job ids
+        # pagination 
+        ul_class = self.driver.find_element(By.CLASS_NAME,"artdeco-pagination__pages")
+        pages = ul_class.find_elements(By.TAG_NAME, "li")
+        page_no = 1
+        job_no = 1
+        for page in range(2, len(pages) + 1):
+            job_ids = []
+            for job in jobs:
+                job_id = job.get_attribute("data-occludable-job-id")
+                job_ids.append(job_id)
+            # scrapping jobs
+            for job_id in job_ids:
+                print(f"Data Scrapping for Job No.{job_no}, Page No.{page_no}")
+                job_dict = job_scrapping(job_id, keyword, search_location)
+                # job_dict = job_scrapping(job_id, keyword, search_location)
+                if job_dict["position"] == "":
+                    continue
+                else:
+                    print("data saving in data base :", job_dict["position"])
+                    insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
+                    if insertion:
+                        logging.info("Data inserted in MongoDB")
+                        query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
+                        embedding_status = linkedin_automate(query)
+                        if embedding_status:
+                            print("Data inserted into vector store")
+                        print("Data ingested for:", job_dict.get("job_id"))
+                        time.sleep(random.uniform(2, 4))
+                time.sleep(random.uniform(5, 10))
+                job_no += 1
+            # page changes here 
+            self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
+            time.sleep(15)
+            page_no += 1
             
-            # getting job ids
-            # pagination 
-            ul_class = self.driver.find_element(By.CLASS_NAME,"artdeco-pagination__pages")
-            pages = ul_class.find_elements(By.TAG_NAME, "li")
-            page_no = 1
-            job_no = 1
-            for page in range(2, len(pages) + 1):
-                job_ids = []
-                for job in jobs:
-                    job_id = job.get_attribute("data-occludable-job-id")
-                    job_ids.append(job_id)
-                # scrapping jobs
-                for job_id in job_ids:
-                    print(f"Data Scrapping for Job No.{job_no}, Page No.{page_no}")
-                    job_dict = job_scrapping(job_id, data[0], data[1])
-                    # job_dict = job_scrapping(job_id, keyword, search_location)
-                    if job_dict["position"] == "":
-                        continue
-                    else:
-                        print("data saving in data base :", job_dict["position"])
-                        insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
-                        if insertion:
-                            logging.info("Data inserted in MongoDB")
-                            query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
-                            embedding_status = linkedin_automate(query)
-                            if embedding_status:
-                                print("Data inserted into vector store")
-                            print("Data ingested for:", job_dict.get("job_id"))
-                            time.sleep(random.uniform(2, 4))
-                    time.sleep(random.uniform(2, 4))
-                    job_no += 1
-                # page changes here 
-                self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
-                time.sleep(15)
-                page_no += 1
-                
-            self.driver.implicitly_wait(10)
-            logging.info("Done scraping.")
-            logging.info("Closing DB connection.")
-            self.close_session()
+        self.driver.implicitly_wait(10)
+        logging.info("Done scraping.")
+        logging.info("Closing DB connection.")
+        self.close_session()
 
 if __name__ == "__main__":
     email = "usama.whitebox@gmail.com"
