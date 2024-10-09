@@ -1,3 +1,4 @@
+import datetime
 import traceback
 import undetected_chromedriver as uc
 import time
@@ -17,8 +18,8 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 from updated_job_script import job_scrapping
 from google_sheet import query_data
 from tenacity import retry, stop_after_attempt, wait_fixed
-from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
- 
+from selenium.common.exceptions import StaleElementReferenceException
+
 # Setup logging
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -50,6 +51,7 @@ chrome_options.add_experimental_option("prefs", {
     "download.prompt_for_download": False,
     "download.directory_upgrade": False,
     "safebrowsing.enabled": True,
+    "download.prompt_for_download": False,
     "profile.default_content_settings.popups": False,
 })
  
@@ -60,7 +62,7 @@ class LinkedScrapper:
         self.delay = delay
         logger.info("Starting driver")
         self.linkedin_job = db["jobs"]
-        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options, version_main=126)
+        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options, version_main=128)
  
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     def login(self, email, password):
@@ -98,7 +100,6 @@ class LinkedScrapper:
         Search_location = search[1]
         search_keyword = Search_keyword.find_element(By.CLASS_NAME, "jobs-search-box__text-input")
         search_location = Search_location.find_element(By.CLASS_NAME, "jobs-search-box__text-input")
- 
         # Clear the fields using JavaScript
         self.driver.execute_script("arguments[0].value = '';", search_keyword)
         self.driver.execute_script("arguments[0].value = '';", search_location)
@@ -124,16 +125,88 @@ class LinkedScrapper:
     def close_session(self):
         """Close the session"""
         logger.info("Closing session")
-        try:
-            self.driver.quit()
-        except WebDriverException as e:
-            logger.warning(f"Error closing WebDriver: {e}")
+        self.driver.close()
  
     def load_csv(self, file):
         df = pd.read_csv(file, on_bad_lines='skip')
         data = list(df.itertuples(index=False, name=None))
         return data
  
+    # def run(self, email, password):
+    #     try:
+    #         if os.path.exists("usama_data/cookies.txt"):
+    #             self.driver.get("https://www.linkedin.com/")
+    #             self.load_cookie("usama_data/cookies.txt")
+    #             self.driver.get("https://www.linkedin.com/")
+    #         else:
+    #             self.login(email=email, password=password)
+    #             self.save_cookie("usama_data/cookies.txt")
+    #     except Exception as e:
+    #         logger.error(f"Error during login or loading cookies: {e}")
+    #         self.close_session()
+    #         return
+ 
+    #     self.wait(random.uniform(10, 17))
+    #     logger.info("Begin LinkedIn keyword search")
+    #     keyword = "Frontend developer"
+    #     search_location = "Australia"
+    #     query_data= ['software engineer']
+ 
+    #     for data in query_data():
+    #         try:
+    #             # self.search_linkedin(data[0], data[1])
+    #             self.search_linkedin(keyword, search_location)
+    #             time.sleep(random.uniform(5, 10))
+    #             jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
+    #             time.sleep(random.uniform(5, 10))
+ 
+    #             # getting job ids
+    #             # pagination
+    #             ul_class = self.driver.find_element(By.CLASS_NAME, "artdeco-pagination__pages")
+    #             pages = ul_class.find_elements(By.TAG_NAME, "li")
+    #             page_no = 1
+    #             job_no = 1
+    #             for page in range(2, len(pages) + 1):
+    #                 job_ids = []
+    #                 for job in jobs:
+    #                     job_id = job.get_attribute("data-occludable-job-id")
+    #                     job_ids.append(job_id)
+    #                 # scrapping jobs
+    #                 for job_id in job_ids:
+    #                     try:
+    #                         logger.info(f"Data Scrapping for Job No.{job_no}, Page No.{page_no}")
+    #                         job_dict = job_scrapping(job_id, data[0], data[1])
+    #                         # job_dict = job_scrapping(job_id, keyword, search_location)
+    #                         if job_dict["position"] == "":
+    #                             continue
+    #                         else:
+    #                             logger.info(f"Data saving in database: {job_dict['position']}")
+    #                             insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
+    #                             if insertion:
+    #                                 logger.info("Data inserted in MongoDB")
+    #                                 query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
+    #                                 embedding_status = linkedin_automate(query)
+    #                                 if embedding_status:
+    #                                     logger.info("Data inserted into vector store")
+    #                                 logger.info(f"Data ingested for: {job_dict.get('job_id')}")
+    #                                 time.sleep(random.uniform(2, 4))
+    #                     except Exception as e:
+    #                         logger.error(f"Error processing job ID {job_id}: {e}")
+    #                     time.sleep(random.uniform(2, 4))
+    #                     job_no += 1
+    #                 # page changes here
+    #                 self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
+    #                 time.sleep(15)
+    #                 page_no += 1
+ 
+    #             self.driver.implicitly_wait(10)
+    #         except Exception as e:
+    #             logger.error(f"Error processing query {data}: {e}")
+    #             continue  # Skip the current query and continue with the next one
+ 
+    #     logger.info("Done scraping.")
+    #     logger.info("Closing DB connection.")
+    #     self.close_session()
     def run(self, email, password):
         try:
             if os.path.exists("usama_data/cookies.txt"):
@@ -147,25 +220,27 @@ class LinkedScrapper:
             logger.error(f"Error during login or loading cookies: {e}")
             self.close_session()
             return
- 
+
         self.wait(random.uniform(10, 17))
         logger.info("Begin LinkedIn keyword search")
-       
+        # keyword = "Software Engineer"
+        # search_location = "Australia"
         for data in query_data():
             try:
+                # self.search_linkedin(keyword, search_location)
                 self.search_linkedin(data[0], data[1])
                 time.sleep(random.uniform(5, 10))
                 jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
                 time.sleep(random.uniform(5, 10))
- 
+
                 ul_class = self.driver.find_element(By.CLASS_NAME, "artdeco-pagination__pages")
                 pages = ul_class.find_elements(By.TAG_NAME, "li")
                 page_no = 1
                 job_no = 1
- 
+
                 for page in range(2, len(pages) + 1):
                     job_ids = []
- 
+
                     for job in jobs:
                         try:
                             # Check if the job is no longer accepting applications
@@ -174,8 +249,9 @@ class LinkedScrapper:
                                 logger.info(f"Skipping job: {job.text.split()[0]} - Not accepting applications")
                                 continue
                         except Exception as e:
-                            pass  # No closed status found; proceed normally
- 
+                            # No closed status found; proceed normally
+                            pass
+
                         # Retry fetching job ID in case of stale element reference
                         try:
                             job_id = job.get_attribute("data-occludable-job-id")
@@ -184,7 +260,7 @@ class LinkedScrapper:
                             logger.warning(f"Stale element encountered for job: {job.text.split()[0]}. Refetching jobs.")
                             jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
                             continue
- 
+
                     # Scrape the jobs
                     for job_id in job_ids:
                         try:
@@ -207,26 +283,37 @@ class LinkedScrapper:
                             logger.error(f"Error processing job ID {job_id}: {e}")
                         time.sleep(random.uniform(2, 4))
                         job_no += 1
- 
+
                     # Navigate to the next page
                     try:
-                        self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page='{page}']").click()
-                        page_no += 1
-                        time.sleep(random.uniform(5, 10))
-                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
-                    except Exception as e:
-                        logger.error(f"Error clicking next page: {e}")
-                        break
- 
+                        self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
+                        time.sleep(15)
+                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")  # Refetch jobs after page change
+                    except StaleElementReferenceException:
+                        logger.warning("Stale element on pagination. Refetching page elements.")
+                        self.driver.refresh()
+                        time.sleep(5)
+                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")  # Refetch after refresh
+
+                    page_no += 1
+
+                self.driver.implicitly_wait(10)
+
             except Exception as e:
-                logger.error(f"Error searching jobs: {e}")
-            finally:
-                self.close_session()
- 
+                logger.error(f"Error processing query : {e}")
+
+            logger.info("Done scraping.")
+            logger.info("Closing DB connection.")
+            self.close_session()
+
 if __name__ == "__main__":
-    # Replace with your LinkedIn email and password
     email = "usama.whitebox@gmail.com"
     password = "whitebox@"
  
-    scrapper = LinkedScrapper()
-    scrapper.run(email, password)
+    bot = LinkedScrapper()
+    bot.run(email, password)
+    time.sleep(random.uniform(5, 15))
+ 
+    # Close the WebDriver
+    bot.driver.quit()
+ 
