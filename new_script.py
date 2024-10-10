@@ -19,6 +19,7 @@ from updated_job_script import job_scrapping
 from google_sheet import query_data
 from tenacity import retry, stop_after_attempt, wait_fixed
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import InvalidSessionIdException
 
 # Setup logging
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -124,89 +125,20 @@ class LinkedScrapper:
  
     def close_session(self):
         """Close the session"""
-        logger.info("Closing session")
-        self.driver.close()
+        try:
+            if self.driver:
+                logger.info("Closing session")
+                self.driver.close()
+        except InvalidSessionIdException as e:
+            logger.error(f"Session already closed: {e}")
+        except Exception as e:
+            logger.error(f"Error while closing the session: {e}")
  
     def load_csv(self, file):
         df = pd.read_csv(file, on_bad_lines='skip')
         data = list(df.itertuples(index=False, name=None))
         return data
  
-    # def run(self, email, password):
-    #     try:
-    #         if os.path.exists("usama_data/cookies.txt"):
-    #             self.driver.get("https://www.linkedin.com/")
-    #             self.load_cookie("usama_data/cookies.txt")
-    #             self.driver.get("https://www.linkedin.com/")
-    #         else:
-    #             self.login(email=email, password=password)
-    #             self.save_cookie("usama_data/cookies.txt")
-    #     except Exception as e:
-    #         logger.error(f"Error during login or loading cookies: {e}")
-    #         self.close_session()
-    #         return
- 
-    #     self.wait(random.uniform(10, 17))
-    #     logger.info("Begin LinkedIn keyword search")
-    #     keyword = "Frontend developer"
-    #     search_location = "Australia"
-    #     query_data= ['software engineer']
- 
-    #     for data in query_data():
-    #         try:
-    #             # self.search_linkedin(data[0], data[1])
-    #             self.search_linkedin(keyword, search_location)
-    #             time.sleep(random.uniform(5, 10))
-    #             jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
-    #             time.sleep(random.uniform(5, 10))
- 
-    #             # getting job ids
-    #             # pagination
-    #             ul_class = self.driver.find_element(By.CLASS_NAME, "artdeco-pagination__pages")
-    #             pages = ul_class.find_elements(By.TAG_NAME, "li")
-    #             page_no = 1
-    #             job_no = 1
-    #             for page in range(2, len(pages) + 1):
-    #                 job_ids = []
-    #                 for job in jobs:
-    #                     job_id = job.get_attribute("data-occludable-job-id")
-    #                     job_ids.append(job_id)
-    #                 # scrapping jobs
-    #                 for job_id in job_ids:
-    #                     try:
-    #                         logger.info(f"Data Scrapping for Job No.{job_no}, Page No.{page_no}")
-    #                         job_dict = job_scrapping(job_id, data[0], data[1])
-    #                         # job_dict = job_scrapping(job_id, keyword, search_location)
-    #                         if job_dict["position"] == "":
-    #                             continue
-    #                         else:
-    #                             logger.info(f"Data saving in database: {job_dict['position']}")
-    #                             insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
-    #                             if insertion:
-    #                                 logger.info("Data inserted in MongoDB")
-    #                                 query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
-    #                                 embedding_status = linkedin_automate(query)
-    #                                 if embedding_status:
-    #                                     logger.info("Data inserted into vector store")
-    #                                 logger.info(f"Data ingested for: {job_dict.get('job_id')}")
-    #                                 time.sleep(random.uniform(2, 4))
-    #                     except Exception as e:
-    #                         logger.error(f"Error processing job ID {job_id}: {e}")
-    #                     time.sleep(random.uniform(2, 4))
-    #                     job_no += 1
-    #                 # page changes here
-    #                 self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
-    #                 time.sleep(15)
-    #                 page_no += 1
- 
-    #             self.driver.implicitly_wait(10)
-    #         except Exception as e:
-    #             logger.error(f"Error processing query {data}: {e}")
-    #             continue  # Skip the current query and continue with the next one
- 
-    #     logger.info("Done scraping.")
-    #     logger.info("Closing DB connection.")
-    #     self.close_session()
     def run(self, email, password):
         try:
             if os.path.exists("usama_data/cookies.txt"):
@@ -216,6 +148,10 @@ class LinkedScrapper:
             else:
                 self.login(email=email, password=password)
                 self.save_cookie("usama_data/cookies.txt")
+        except InvalidSessionIdException as e:
+            logger.error(f"Invalid session error during login: {e}")
+            self.close_session()
+            return
         except Exception as e:
             logger.error(f"Error during login or loading cookies: {e}")
             self.close_session()
@@ -223,16 +159,13 @@ class LinkedScrapper:
 
         self.wait(random.uniform(10, 17))
         logger.info("Begin LinkedIn keyword search")
-        # keyword = "Software Engineer"
-        # search_location = "Australia"
+
         for data in query_data():
             try:
-                # self.search_linkedin(keyword, search_location)
                 self.search_linkedin(data[0], data[1])
                 time.sleep(random.uniform(5, 10))
                 jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
                 time.sleep(random.uniform(5, 10))
-
                 ul_class = self.driver.find_element(By.CLASS_NAME, "artdeco-pagination__pages")
                 pages = ul_class.find_elements(By.TAG_NAME, "li")
                 page_no = 1
@@ -243,16 +176,13 @@ class LinkedScrapper:
 
                     for job in jobs:
                         try:
-                            # Check if the job is no longer accepting applications
                             closed_status = job.find_element(By.CLASS_NAME, "artdeco-inline-feedback__message")
                             if "No longer accepting applications" in closed_status.text:
                                 logger.info(f"Skipping job: {job.text.split()[0]} - Not accepting applications")
                                 continue
-                        except Exception as e:
-                            # No closed status found; proceed normally
+                        except Exception:
                             pass
 
-                        # Retry fetching job ID in case of stale element reference
                         try:
                             job_id = job.get_attribute("data-occludable-job-id")
                             job_ids.append(job_id)
@@ -261,50 +191,63 @@ class LinkedScrapper:
                             jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
                             continue
 
-                    # Scrape the jobs
                     for job_id in job_ids:
                         try:
                             logger.info(f"Data Scraping for Job No.{job_no}, Page No.{page_no}")
                             job_dict = job_scrapping(job_id, data[0], data[1])
                             if job_dict["position"] == "":
                                 continue
-                            else:
-                                logger.info(f"Data saving in database: {job_dict['position']}")
-                                insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
-                                if insertion:
-                                    logger.info("Data inserted in MongoDB")
-                                    query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
-                                    embedding_status = linkedin_automate(query)
-                                    if embedding_status:
-                                        logger.info("Data inserted into vector store")
-                                    logger.info(f"Data ingested for: {job_dict.get('job_id')}")
-                                    time.sleep(random.uniform(2, 4))
+                            logger.info(f"Data saving in database: {job_dict['position']}")
+                            insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
+                            if insertion:
+                                logger.info("Data inserted in MongoDB")
+                                query = self.linkedin_job.find_one({'job_id': job_dict.get("job_id")})
+                                embedding_status = linkedin_automate(query)
+                                if embedding_status:
+                                    logger.info("Data inserted into vector store")
+                                logger.info(f"Data ingested for: {job_dict.get('job_id')}")
+                                time.sleep(random.uniform(2, 4))
                         except Exception as e:
                             logger.error(f"Error processing job ID {job_id}: {e}")
                         time.sleep(random.uniform(2, 4))
                         job_no += 1
 
-                    # Navigate to the next page
+                    pagination_buttons = self.driver.find_elements(By.CSS_SELECTOR, "li.artdeco-pagination__indicator button")
+                    current_page = page
+
                     try:
-                        self.driver.find_element(By.CSS_SELECTOR, f"li[data-test-pagination-page-btn='{page}']").click()
-                        time.sleep(15)
-                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")  # Refetch jobs after page change
+                        for button in pagination_buttons:
+                            if button.get_attribute("aria-label") == f"Page {current_page}":
+                                next_index = pagination_buttons.index(button) + 1
+                                if next_index < len(pagination_buttons):
+                                    next_button = pagination_buttons[next_index]
+                                    next_button.click()
+                                    time.sleep(15)
+                                    current_page += 1
+                                else:
+                                    logger.warning("No next page available.")
+                                break
+
+                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
+
                     except StaleElementReferenceException:
                         logger.warning("Stale element on pagination. Refetching page elements.")
                         self.driver.refresh()
                         time.sleep(5)
-                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")  # Refetch after refresh
+                        jobs = self.driver.find_elements(By.CLASS_NAME, "occludable-update")
 
-                    page_no += 1
-
+                page_no += 1
                 self.driver.implicitly_wait(10)
 
+            except InvalidSessionIdException as e:
+                logger.error(f"Session expired during query: {e}")
+                break  # Break out of the loop if the session becomes invalid
             except Exception as e:
                 logger.error(f"Error processing query : {e}")
 
-            logger.info("Done scraping.")
-            logger.info("Closing DB connection.")
-            self.close_session()
+        logger.info("Done scraping.")
+        logger.info("Closing DB connection.")
+        self.close_session()
 
 if __name__ == "__main__":
     email = "usama.whitebox@gmail.com"
@@ -316,4 +259,3 @@ if __name__ == "__main__":
  
     # Close the WebDriver
     bot.driver.quit()
- 
