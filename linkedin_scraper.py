@@ -48,17 +48,15 @@ chrome_options.add_argument("--disable-popup-blocking")
 chrome_options.add_argument("--start-maximized")
 chrome_options.add_argument('--ignore-certificate-errors-spki-list')
 chrome_options.add_argument('--ignore-ssl-errors')
-# download_dir = "/home/whitebox/job_scrapper/reports/resources"
-# chrome_options.add_experimental_option("prefs", {
-#   "download.default_directory": download_dir,
-#   "download.prompt_for_download": False, ## change the downpath accordingly
-#   "download.directory_upgrade": False,
-#   "safebrowsing.enabled": True,
-#   "download.prompt_for_download":False,
-#   "profile.default_content_settings.popups":False,
-  
-
-#   })
+download_dir = "/home/whitebox/job_scrapper/reports/resources"
+chrome_options.add_experimental_option("prefs", {
+  "download.default_directory": download_dir,
+  "download.prompt_for_download": False, ## change the downpath accordingly
+  "download.directory_upgrade": False,
+  "safebrowsing.enabled": True,
+  "download.prompt_for_download":False,
+  "profile.default_content_settings.popups":False,
+  })
 
 class LinkedScrapper:
     def __init__(self, delay=5):
@@ -69,20 +67,19 @@ class LinkedScrapper:
         self.delay=delay
         logging.info("Starting driver")
         self.linkedin_job=db["jobs"]
-        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options,version_main=126)
+        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options,version_main=124)
 
     def login(self, email, password):
         """Go to linkedin and login"""
         # go to linkedin:
         logging.info("Logging in")
         self.driver.get('https://www.linkedin.com/login')        
-        time.sleep(20)
         time.sleep(self.delay)
-
         self.driver.find_element(By.ID,'username').send_keys(email)
         self.driver.find_element(By.ID,'password').send_keys(password)
         self.driver.find_element(By.ID,'password').send_keys(Keys.RETURN)
-        self.driver.implicitly_wait(10)
+        self.driver.implicitly_wait(50)
+        time.sleep(20)
         logging.info("logedin successfully..........")
     def save_cookie(self, path):
         with open(path, 'wb') as filehandler:
@@ -100,7 +97,7 @@ class LinkedScrapper:
         """
         logging.info("Searching jobs page")
         self.driver.get("https://www.linkedin.com/jobs")
-        time.sleep(30)
+        time.sleep(10)
         search_bar=WebDriverWait(self.driver,10).until(EC.presence_of_element_located((By.ID,'global-nav-search')))
         
         time.sleep(self.delay)
@@ -123,7 +120,8 @@ class LinkedScrapper:
         """Just easier to build this in here.
         Parameters
         ----------
-        t_delay [optional] : int
+        t_delay [optional] : int        time.sleep(100)
+
             seconds to wait.
         """
         delay = self.delay if t_delay == None else t_delay
@@ -219,76 +217,77 @@ class LinkedScrapper:
         return data
 
     def run(self, email, password):
-        # if os.path.exists("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt"):
-        if os.path.exists("/usama_data/cookies.txt"):
+        if os.path.exists("/home/whitebox/Desktop/Jobs-Scrapper/usama_data/cookies.txt"):
+        # if os.path.exists("usama_data/cookies.txt"):
             self.driver.get("https://www.linkedin.com/")
-            
-            # self.load_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
-            self.load_cookie("/usama_data/cookies.txt")
+            time
+            self.load_cookie("/home/whitebox/Desktop/Jobs-Scrapper/usama_data/cookies.txt")
+            # self.load_cookie("usama_data/cookies.txt")
             self.driver.get("https://www.linkedin.com/")
         else:
             self.login(
                 email=email,
                 password=password
             )
-            # self.save_cookie("/home/whitebox/sementic_search/etl_pipelines/usama_data/cookies.txt")
-            self.save_cookie("/usama_data/cookies.txt")
+            self.save_cookie("/home/whitebox/Desktop/Jobs-Scrapper/usama_data/cookies.txt")
+            # self.save_cookie("usama_data/cookies.txt")
+        
         self.wait(50)
         logging.info("Begin linkedin keyword search")
-        keyword = "Software Engineer"
-        location = "Lahore"
+        keyword = "Oracle"
+        location = "Worldwide"
         self.search_linkedin(keyword, location)
         time.sleep(5)
-        try: 
-            jobs = self.driver.find_elements(By.CLASS_NAME,"occludable-update")
-            print('------------------------total number of jobs found------------',len(jobs))
-            self.wait()
-            time.sleep(5)
-            
-            for job in jobs:
-                no_of_jobs=len(jobs)
-                job_dict={}                
-                if len(jobs)!=0:
-                    self.scroll_to(job)
-                    position_data_list=self.get_position_data(job)
-                    print("----------------------------------list of final information------------------------")
-                    search_keywords={'keyword':keyword,'location':location}
-                    print("Position data List", position_data_list)
-                    job_dict["position"]=position_data_list[0]
-                    job_dict["location"]=position_data_list[1]
-                    job_dict["company"]=position_data_list[2]
-                    job_dict["company_address"]=position_data_list[3]
-                    job_dict["hiring_person"]=position_data_list[4]
-                    job_dict["hiring_person_linkedin_link"]=position_data_list[5]
-                    job_dict["job_id"]=position_data_list[6]
-                    
-                    job_dict["time_stamp"]=str(datetime.now())
-                    job_dict["job_source"]="linkedin"
-                    job_dict["search_keywords"]=search_keywords
-                    job_dict["details"]=position_data_list[7]
-                    job_dict["other_information"]= position_data_list[8]
-                    job_dict["job_details_link"]=position_data_list[9]
-                    job_dict["job_status"]="active"
-
-                    insertion=self.linkedin_job.update_one({'job_id':job_dict.get("job_id")},{"$set":job_dict},upsert=True)
-                    if insertion:
-                        logging.info("Data inserted in mongo db")
-                        query=self.linkedin_job.find_one({'job_id':job_dict.get("job_id")})
-                        embedding_status=linkedin_automate(query)
-                        if embedding_status:
-                            print("data inserted into vector store")
-                        print("Data Ingested for:",job_dict.get("job_id"))
-
-                        self.wait()
-                        self.driver.implicitly_wait(5)
-                    job.click()
-                    no_of_jobs=no_of_jobs-1
-                time.sleep(5)
-                self.wait()
+        # try: 
+        jobs = self.driver.find_elements(By.CLASS_NAME,"occludable-update")
+        print('------------------------total number of jobs found------------',len(jobs))
+        self.wait()
+        time.sleep(5)
+        
+        for job in jobs:
+            no_of_jobs=len(jobs)
+            job_dict={}                
+            if len(jobs)!=0:
+                self.scroll_to(job)
+                position_data_list=self.get_position_data(job)
+                print("----------------------------------list of final information------------------------")
+                search_keywords={'keyword':keyword,'location':location}
+                print("Position data List", position_data_list)
+                job_dict["position"]=position_data_list[0]
+                job_dict["location"]=position_data_list[1]
+                job_dict["company"]=position_data_list[2]
+                job_dict["company_address"]=position_data_list[3]
+                job_dict["hiring_person"]=position_data_list[4]
+                job_dict["hiring_person_linkedin_link"]=position_data_list[5]
+                job_dict["job_id"]=position_data_list[6]
                 
-        except Exception as e:
-            print(traceback.format_exc())
-            pass
+                job_dict["time_stamp"]=str(datetime.now())
+                job_dict["job_source"]="linkedin"
+                job_dict["search_keywords"]=search_keywords
+                job_dict["details"]=position_data_list[7]
+                job_dict["other_information"]= position_data_list[8]
+                job_dict["job_details_link"]=position_data_list[9]
+                job_dict["job_status"]="active"
+
+                insertion=self.linkedin_job.update_one({'job_id':job_dict.get("job_id")},{"$set":job_dict},upsert=True)
+                if insertion:
+                    logging.info("Data inserted in mongo db")
+                    query=self.linkedin_job.find_one({'job_id':job_dict.get("job_id")})
+                    embedding_status=linkedin_automate(query)
+                    if embedding_status:
+                        print("data inserted into vector store")
+                    print("Data Ingested for:",job_dict.get("job_id"))
+
+                    self.wait()
+                    self.driver.implicitly_wait(5)
+                job.click()
+                no_of_jobs=no_of_jobs-1
+            time.sleep(5)
+            self.wait()
+            
+        # except Exception as e:
+        #     print(traceback.format_exc())
+        #     pass
                             
         self.driver.implicitly_wait(10)
            
@@ -299,8 +298,10 @@ class LinkedScrapper:
 
 
 if __name__ == "__main__":
-    email = "usama.whitebox@gmail.com"
-    password = "whitebox@"
+    # email = "usama.whitebox@gmail.com"
+    # password = "whitebox@"
+    email = "shahbazkhan6732@gmail.com"
+    password = "Zarqam@123"
     bot = LinkedScrapper()
     
     bot.run(email, password)
