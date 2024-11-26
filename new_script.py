@@ -77,7 +77,7 @@ class LinkedScrapper:
         self.driver.find_element(By.ID, 'password').send_keys(password)
         time.sleep(random.uniform(1, 3))
         self.driver.find_element(By.ID, 'password').send_keys(Keys.RETURN)
-        self.driver.implicitly_wait(20)
+        self.driver.implicitly_wait(30)
         logger.info("Logged in successfully")
  
     def save_cookie(self, path):
@@ -394,8 +394,8 @@ class LinkedScrapper:
 
 
 if __name__ == "__main__":
-    email = "usama.whitebox@gmail.com"
-    password = "whitebox@"
+    email = "whiteboxtest11@gmail.com"
+    password = "whitebox@12"
  
     bot = LinkedScrapper()
     bot.run(email, password)
