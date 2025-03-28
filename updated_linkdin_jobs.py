@@ -16,7 +16,7 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 from updated_job_script import job_scrapping
 from google_sheet import query_data
 from selenium.common.exceptions import StaleElementReferenceException
-
+from urllib.parse import quote_plus
 # Setup logging
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -24,9 +24,18 @@ logger = logging.getLogger()
 
  # ua = UserAgent()
 chrome_options = uc.ChromeOptions()
-client = MongoClient("mongodb+srv://shahbazkhan6732:2orI37mNuhTtKzya@cluster0.nqxuncj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+# client = MongoClient("mongodb+srv://shahbazkhan6732:2orI37mNuhTtKzya@cluster0.nqxuncj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+# db = client['job_scraper']
 
-db = client['job_scraper']
+username = "crewdog"
+password = "crewdog@1234"
+encoded_username = quote_plus(username)
+encoded_password = quote_plus(password)
+client = f"mongodb+srv://{encoded_username}:{encoded_password}@crewdogjobs.9fhrv.mongodb.net/?retryWrites=true&w=majority&appName=crewdogjobs"
+ 
+client = MongoClient(client)
+db = client['jobs']
+
 USERNAME = "KvGRDz02ozlx8qXC"
 PASSWORD = "82whP2ljuC1wf52h_streaming-1"
 ENDPOINT = "pr.oxylabs.io:7777"
@@ -74,8 +83,8 @@ class LinkedScrapper:
         logging.basicConfig(level=logging.INFO, format=log_fmt)
         self.delay = delay
         logging.info("Starting driver")
-        self.linkedin_job = db["jobs"]
-        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options, version_main=126)
+        self.linkedin_job = db["reedco_jobs"]
+        self.driver = uc.Chrome(use_subprocess=True, options=chrome_options, version_main=134)
 
     def login(self, email, password):
         """Go to LinkedIn and login"""
@@ -218,6 +227,7 @@ class LinkedScrapper:
                 else:
                     self.login(email=email, password=password)
                     self.save_cookie("usama_data/cookies.txt")
+
             except Exception as e:
                 logger.error(f"Error during login or loading cookies: {e}")
                 self.close_session()
@@ -268,8 +278,14 @@ class LinkedScrapper:
                             try:
                                 logger.info(f"Data Scraping for Job No.{job_no}, Page No.{page_no}")
                                 job_dict = job_scrapping(job_id, data[0], data[1])
+                                # job_dict = job_scrapping(job_id, keyword, search_location)
                                 if job_dict["position"] == "":
                                     continue
+
+                                if not job_dict["hiring_person"]:  # Skip jobs with no hiring person
+                                    logger.info(f"Skipping job {job_id}: No hiring person found.")
+                                    continue
+
                                 else:
                                     logger.info(f"Data saving in database: {job_dict['position']}")
                                     insertion = self.linkedin_job.update_one({'job_id': job_dict.get("job_id")}, {"$set": job_dict}, upsert=True)
@@ -309,8 +325,8 @@ class LinkedScrapper:
                 self.close_session()
 
 if __name__ == "__main__":
-    email = "usama.whitebox@gmail.com"
-    password = "whitebox@"
+    email = "colindev556@gmail.com"
+    password = "Whitebox@123.0"
     bot = LinkedScrapper()
     bot.run(email, password)
     time.sleep(random.uniform(5, 15))

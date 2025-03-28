@@ -112,6 +112,8 @@ def job_scrapping(job_id, keyword, location):
     
     try:
         job_dict["position"] = soup.find("div", {"class": "top-card-layout__entity-info"}).find("a").text.strip()
+        # job_dict["position"] = soup.find("h2", {"class": "top-card-layout__title"}).text.strip()
+
     except AttributeError:
         job_dict["position"] = ""
     
