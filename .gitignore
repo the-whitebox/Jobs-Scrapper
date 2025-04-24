@@ -7,3 +7,4 @@ media
 static
 client.json
 google_sheet.py
+__pycache__
