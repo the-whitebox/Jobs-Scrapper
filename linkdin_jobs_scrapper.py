@@ -65,8 +65,8 @@ chrome_options.add_experimental_option("prefs", {
 
 class LinkedScrapper:
     def __init__(self, delay=5):
-        if not os.path.exists("usama_data"):
-            os.makedirs("usama_data")
+        if not os.path.exists("cookies"):
+            os.makedirs("cookies")
         log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         logging.basicConfig(level=logging.INFO, format=log_fmt)
         self.delay = delay
@@ -143,13 +143,13 @@ class LinkedScrapper:
 
     def run(self, email, password):
             try:
-                if os.path.exists("usama_data/cookies.txt"):
+                if os.path.exists("cookies/cookies.txt"):
                     self.driver.get("https://www.linkedin.com/")
-                    self.load_cookie("usama_data/cookies.txt")
+                    self.load_cookie("cookies/cookies.txt")
                     self.driver.get("https://www.linkedin.com/")
                 else:
                     self.login(email=email, password=password)
-                    self.save_cookie("usama_data/cookies.txt")
+                    self.save_cookie("cookies/cookies.txt")
 
             except Exception as e:
                 logger.error(f"Error during login or loading cookies: {e}")
