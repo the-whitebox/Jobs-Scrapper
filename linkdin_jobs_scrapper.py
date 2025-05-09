@@ -158,8 +158,8 @@ class LinkedScrapper:
 
             self.wait(random.uniform(10, 17))
             logger.info("Begin LinkedIn keyword search")
-            keyword = "Cloud Engineer"
-            search_location = "Ireland"
+            keyword = "Design"
+            search_location = "Germany"
             # for data in query_data():
             try:
                 self.search_linkedin(keyword, search_location)

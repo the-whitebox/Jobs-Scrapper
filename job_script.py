@@ -87,9 +87,9 @@ def job_scrapping(job_id, keyword, location):
                 seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
                 # Compare the two aware datetime objects
-                if job_post_datetime < seven_days_ago:
-                    print("Job post is older than 7 days. Skipping this job.")
-                    return  # Exit the function without saving job details
+                # if job_post_datetime < seven_days_ago:
+                #     print("Job post is older than 7 days. Skipping this job.")
+                #     return  # Exit the function without saving job details
 
                 job_dict['job_post_time'] = job_post_time
 
